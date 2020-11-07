@@ -15,8 +15,9 @@
 # import sys
 # sys.path.append("/home/pi/lcd") # example, path to lcddriver.py
 
-import i2c_lib
 from time import *
+
+import i2c_lib
 
 # LCD Address
 # Usually you will have to use one of the two provided values below.
@@ -108,13 +109,13 @@ class Lcd:
     # put string function
     def lcd_display_string(self, string, line):
 
-        if line == 1:
+        if line % 4 + 1 == 1:
             self.lcd_write(0x80)
-        if line == 2:
+        if line % 4 + 1 == 2:
             self.lcd_write(0xC0)
-        if line == 3:
+        if line % 4 + 1 == 3:
             self.lcd_write(0x94)
-        if line == 4:
+        if line % 4 + 1 == 4:
             self.lcd_write(0xD4)
 
         for char in string:
