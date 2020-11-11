@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     lcd = lcddriver.LcdDummy()
     try:
-        if multiprocessing.cpu_count() > 2:  # if rasperry
+        if multiprocessing.cpu_count() < 2:  # if rasperry
             lcd = lcddriver.Lcd()
         lcd.lcd_clear()
         lcd.lcd_backlight(True)
