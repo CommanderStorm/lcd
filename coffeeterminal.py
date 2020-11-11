@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import feedparser
 
-import lcddriver
-from pigpio_encoder import Rotary
+from libs import lcddriver
+from libs.pigpio_encoder import Rotary
 
 # config
 CONFIG_FILE_Path = Path("db", "config.json")
@@ -21,7 +21,7 @@ if not DB_FILE_Path.is_file():
 RSS_URL = "http://www.tagesschau.de/xml/rss2/"
 
 
-class CoffeTerminal:
+class CoffeeTerminal:
     def __init__(self, coffee_lcd: lcddriver.Lcd):
         print("starting setup")
         self.rss_text = "Loading Tagesschau"
@@ -115,7 +115,7 @@ if __name__ == "__main__":
             lcd = lcddriver.Lcd()
         lcd.lcd_clear()
         lcd.lcd_backlight(True)
-        terminal = CoffeTerminal(lcd)
+        terminal = CoffeeTerminal(lcd)
 
     except KeyboardInterrupt:
         pass

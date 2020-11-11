@@ -203,5 +203,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-/pigpio_encoder.py
+/libs/pigpio_encoder.py
 .idea/
