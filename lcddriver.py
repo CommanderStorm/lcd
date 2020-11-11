@@ -14,8 +14,7 @@
 # set path to lcddriver IN YOUR script such as
 # import sys
 # sys.path.append("/home/pi/lcd") # example, path to lcddriver.py
-
-from time import *
+from time import sleep
 
 import i2c_lib
 
@@ -131,3 +130,25 @@ class Lcd:
             self.lcd_device.write_cmd(LCD_BACKLIGHT)
         else:
             self.lcd_device.write_cmd(LCD_NOBACKLIGHT)
+
+
+class LcdDummy:
+    def lcd_strobe(self, data):
+        pass
+
+    def lcd_write_four_bits(self, data):
+        pass
+
+    def lcd_write(self, cmd, mode=0):
+        pass
+
+    def lcd_display_string(self, string, line):
+        print(f"{line}: {string}")
+        pass
+
+    def lcd_clear(self):
+        print("cleared screen")
+        pass
+
+    def lcd_backlight(self, state):
+        pass

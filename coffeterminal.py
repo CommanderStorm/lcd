@@ -1,11 +1,13 @@
 import asyncio
 import json
+import multiprocessing
 from pathlib import Path
 from typing import Dict, List
 
 import feedparser
 
 import lcddriver
+from pigpio_encoder import Rotary
 
 # config
 CONFIG_FILE_Path = Path("db", "config.json")
@@ -63,9 +65,13 @@ class CoffeTerminal:
         asyncio.run(self.main())
 
     async def main(self):
-        await self.update_rss()
-        await self.main_ui()
+        my_rotary = Rotary(clk_gpio=5, dt_gpio=6, sw_gpio=12)
+        my_rotary.setup_rotary(rotary_callback=self.rotary_callback, up_callback=self.up_callback,
+                               down_callback=self.down_callback, debounce=300)
+        my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
+
         await self.print_rss()
+        await self.update_rss()
 
     async def print_rss(self):
         while True:
@@ -88,22 +94,34 @@ class CoffeTerminal:
             self.rss_text = "   ---   ".join(titeles).encode('ascii', 'replace').decode()
             await asyncio.sleep(10 * 60)
 
-    async def main_ui(self):
-        pass
+    def rotary_callback(self, counter):
+        return
+
+    def switch_pressed(self):
+        print("Switch pressed")
+
+    def up_callback(self):
+        print("Up rotation")
+
+    def down_callback(self):
+        print("Down rotation")
 
 
 if __name__ == "__main__":
-    lcd = lcddriver.Lcd()
-    lcd.lcd_clear()
-    lcd.lcd_backlight(False)
 
+    lcd = lcddriver.LcdDummy()
     try:
+        if multiprocessing.cpu_count() > 2:  # if rasperry
+            lcd = lcddriver.Lcd()
+        lcd.lcd_clear()
+        lcd.lcd_backlight(True)
         terminal = CoffeTerminal(lcd)
+
     except KeyboardInterrupt:
         pass
     finally:
         lcd.lcd_clear()
         lcd.lcd_display_string("Sorry for the", 0)
-        lcd.lcd_display_string("inconvinience.", 1)
+        lcd.lcd_display_string("inconvenience.", 1)
         lcd.lcd_display_string("Maintenance in", 2)
         lcd.lcd_display_string("progress...", 3)
