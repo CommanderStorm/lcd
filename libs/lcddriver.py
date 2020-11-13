@@ -109,6 +109,7 @@ class Lcd:
 
     # put string function
     async def lcd_display_string(self, string, line):
+        string = (string + (" " * 20))[:20]
         if self.debug:
             print(f"{line}: {string} [len: {len(string)}]")
         async with self.lock:
@@ -121,13 +122,13 @@ class Lcd:
             if line % 4 + 1 == 4:
                 self.lcd_write(0xD4)
 
-            for char in string[:20]:
+            for char in string:
                 self.lcd_write(ord(char), Rs)
 
     # clear lcd and set to home
     async def lcd_clear(self):
         if self.debug:
-            print(f"cleared screen")
+            print(f"Cleared Screen")
         async with self.lock:
             self.lcd_write(LCD_CLEARDISPLAY)
             self.lcd_write(LCD_RETURNHOME)

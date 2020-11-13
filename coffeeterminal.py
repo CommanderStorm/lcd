@@ -127,7 +127,7 @@ class CoffeeTerminal:
             self.coffee_balance[selected_name] = new_balance
             # print balance
             await self.lcd.lcd_display_string("New Balance:", 1)
-            await self.lcd.lcd_display_string(str(new_balance)[:20], 1)
+            await self.lcd.lcd_display_string(str(new_balance), 1)
             await asyncio.sleep(3)
             # print thank you message
             await self.lcd.lcd_display_string("Thank you for", 1)
