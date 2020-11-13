@@ -90,6 +90,7 @@ class CoffeeTerminal:
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
 
         self.switchloop = asyncio.get_event_loop()
+        self.switchloop.create_task(self.display_index())
         print("setup done")
 
     async def print_rss(self):
@@ -127,7 +128,8 @@ class CoffeeTerminal:
             self.coffee_balance[selected_name] = new_balance
             # print balance
             await self.lcd.lcd_display_string("New Balance:", 1)
-            await self.lcd.lcd_display_string(str(new_balance), 1)
+            await self.lcd.lcd_display_string(str(new_balance), 2)
+            await self.lcd.lcd_display_string("", 3)
             await asyncio.sleep(3)
             # print thank you message
             await self.lcd.lcd_display_string("Thank you for", 1)
@@ -188,7 +190,7 @@ async def main(lcd_terminal):
 if __name__ == "__main__":
     lcd = lcddriver.LcdDummy()
     if multiprocessing.cpu_count() < 2:  # if rasperry
-        lcd = lcddriver.Lcd(debug=True)
+        lcd = lcddriver.Lcd(debug=False)
     try:
         asyncio.run(main(lcd))
     except KeyboardInterrupt:
