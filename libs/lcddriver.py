@@ -14,6 +14,7 @@
 # set path to lcddriver IN YOUR script such as
 # import sys
 # sys.path.append("/home/pi/lcd") # example, path to lcddriver.py
+import asyncio
 from time import sleep
 
 from libs import i2c_lib
@@ -75,9 +76,10 @@ Rs = 0b00000001  # Register select bit
 
 class Lcd:
     # initializes objects and lcd
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.lock = asyncio.Lock()
         self.lcd_device = i2c_lib.I2cDevice(ADDRESS)
-
+        self.debug = debug
         self.lcd_write(0x03)
         self.lcd_write(0x03)
         self.lcd_write(0x03)
@@ -107,29 +109,35 @@ class Lcd:
 
     # put string function
     def lcd_display_string(self, string, line):
+        if self.debug:
+            print(f"{line}: {string} [len: {len(string)}]")
+        async with self.lock:
+            if line % 4 + 1 == 1:
+                self.lcd_write(0x80)
+            if line % 4 + 1 == 2:
+                self.lcd_write(0xC0)
+            if line % 4 + 1 == 3:
+                self.lcd_write(0x94)
+            if line % 4 + 1 == 4:
+                self.lcd_write(0xD4)
 
-        if line % 4 + 1 == 1:
-            self.lcd_write(0x80)
-        if line % 4 + 1 == 2:
-            self.lcd_write(0xC0)
-        if line % 4 + 1 == 3:
-            self.lcd_write(0x94)
-        if line % 4 + 1 == 4:
-            self.lcd_write(0xD4)
-
-        for char in string[:20]:
-            self.lcd_write(ord(char), Rs)
+            for char in string[:20]:
+                self.lcd_write(ord(char), Rs)
 
     # clear lcd and set to home
     def lcd_clear(self):
-        self.lcd_write(LCD_CLEARDISPLAY)
-        self.lcd_write(LCD_RETURNHOME)
+        if self.debug:
+            print(f"cleared screen")
+        async with self.lock:
+            self.lcd_write(LCD_CLEARDISPLAY)
+            self.lcd_write(LCD_RETURNHOME)
 
     def lcd_backlight(self, state):
-        if state:
-            self.lcd_device.write_cmd(LCD_BACKLIGHT)
-        else:
-            self.lcd_device.write_cmd(LCD_NOBACKLIGHT)
+        async with self.lock:
+            if state:
+                self.lcd_device.write_cmd(LCD_BACKLIGHT)
+            else:
+                self.lcd_device.write_cmd(LCD_NOBACKLIGHT)
 
 
 class LcdDummy:

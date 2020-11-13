@@ -183,7 +183,7 @@ if __name__ == "__main__":
     lcd = lcddriver.LcdDummy()
     try:
         if multiprocessing.cpu_count() < 2:  # if rasperry
-            lcd = lcddriver.Lcd()
+            lcd = lcddriver.Lcd(debug=True)
         lcd.lcd_clear()
         lcd.lcd_backlight(True)
         terminal = CoffeeTerminal(lcd)
