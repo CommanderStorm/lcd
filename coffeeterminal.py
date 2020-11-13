@@ -40,12 +40,10 @@ def prettyfy_rss_string(input_str):
 
 class CoffeeTerminal:
     def __init__(self, coffee_lcd: lcddriver.Lcd):
+        print("starting setup")
         # setup lcd
         self.lcd = coffee_lcd
-        await self.lcd.lcd_clear()
-        await self.lcd.lcd_backlight(True)
         # setup rss
-        print("starting setup")
         self.rss_text = "Loading Tagesschau"
         # load config
         with open(CONFIG_FILE_Path) as config_file:
@@ -90,11 +88,14 @@ class CoffeeTerminal:
         asyncio.run(self.main())
 
     async def main(self):
+        await self.lcd.lcd_clear()
+        await self.lcd.lcd_backlight(True)
+
         if multiprocessing.cpu_count() < 2:  # if rasperry
             my_rotary = Rotary(clk_gpio=5, dt_gpio=6, sw_gpio=12)
             my_rotary.setup_rotary(up_callback=self.up_callback, down_callback=self.down_callback, debounce=300)
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
-
+        print("rss loop")
         await self.print_rss()
 
     async def print_rss(self):
