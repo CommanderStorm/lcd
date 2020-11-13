@@ -108,7 +108,7 @@ class Lcd:
         self.lcd_write_four_bits(mode | ((cmd << 4) & 0xF0))
 
     # put string function
-    def lcd_display_string(self, string, line):
+    async def lcd_display_string(self, string, line):
         if self.debug:
             print(f"{line}: {string} [len: {len(string)}]")
         async with self.lock:
@@ -125,14 +125,14 @@ class Lcd:
                 self.lcd_write(ord(char), Rs)
 
     # clear lcd and set to home
-    def lcd_clear(self):
+    async def lcd_clear(self):
         if self.debug:
             print(f"cleared screen")
         async with self.lock:
             self.lcd_write(LCD_CLEARDISPLAY)
             self.lcd_write(LCD_RETURNHOME)
 
-    def lcd_backlight(self, state):
+    async def lcd_backlight(self, state):
         async with self.lock:
             if state:
                 self.lcd_device.write_cmd(LCD_BACKLIGHT)
@@ -141,6 +141,7 @@ class Lcd:
 
 
 class LcdDummy:
+
     def lcd_strobe(self, data):
         pass
 

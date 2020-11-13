@@ -40,13 +40,17 @@ def prettyfy_rss_string(input_str):
 
 class CoffeeTerminal:
     def __init__(self, coffee_lcd: lcddriver.Lcd):
+        # setup lcd
+        self.lcd = coffee_lcd
+        await self.lcd.lcd_clear()
+        await self.lcd.lcd_backlight(True)
+        # setup rss
         print("starting setup")
         self.rss_text = "Loading Tagesschau"
-        self.lcd = coffee_lcd
         # load config
         with open(CONFIG_FILE_Path) as config_file:
             config = json.load(config_file)
-        self.selected_idex: int = int(config["selected_idex"])
+        self.selected_idex: int = int(config["selected_index"])
         self.names: List[str] = list(set(config["names"]))
         if len(self.names) == 0:
             self.names = ["default"]
@@ -54,7 +58,7 @@ class CoffeeTerminal:
         self.confirmation_page = False
         self.confirmation_index = 0
 
-        # initialise coffes
+        # initialise coffee_balance
         if self.coffee_balance.keys() != set(self.names):
             for name in self.names:
                 if name not in self.coffee_balance.keys():
@@ -76,7 +80,7 @@ class CoffeeTerminal:
         # writeback to config
         with open(CONFIG_FILE_Path, "w") as config_file:
             config = {
-                "selected_idex": self.selected_idex,
+                "selected_index": self.selected_idex,
                 "names": self.names,
                 "coffee_on_last_restart": self.coffee_balance,
             }
@@ -88,8 +92,7 @@ class CoffeeTerminal:
     async def main(self):
         if multiprocessing.cpu_count() < 2:  # if rasperry
             my_rotary = Rotary(clk_gpio=5, dt_gpio=6, sw_gpio=12)
-            my_rotary.setup_rotary(rotary_callback=self.rotary_callback, up_callback=self.up_callback,
-                                   down_callback=self.down_callback, debounce=300)
+            my_rotary.setup_rotary(up_callback=self.up_callback, down_callback=self.down_callback, debounce=300)
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
 
         await self.print_rss()
@@ -102,15 +105,15 @@ class CoffeeTerminal:
                 count = 0
             await self.update_rss()
             if len(self.rss_text) > 20:
-                self.lcd.lcd_display_string(self.rss_text[:20], 0)
+                await self.lcd.lcd_display_string(self.rss_text[:20], 0)
                 await asyncio.sleep(2)
                 for i in range(len(self.rss_text) - 20 + 1):
                     text_to_print = self.rss_text[i:i + 20]
-                    self.lcd.lcd_display_string(text_to_print, 0)
+                    await self.lcd.lcd_display_string(text_to_print, 0)
                     await asyncio.sleep(0.2)
                 await asyncio.sleep(3)
             else:
-                self.lcd.lcd_display_string(self.rss_text, 0)
+                await self.lcd.lcd_display_string(self.rss_text, 0)
                 await asyncio.sleep(4)
 
     async def update_rss(self):
@@ -118,10 +121,7 @@ class CoffeeTerminal:
         titeles = [entry['title'] for entry in d]
         self.rss_text = prettyfy_rss_string("   ---   ".join(titeles))
 
-    def rotary_callback(self, counter):
-        return
-
-    def switch_pressed(self):
+    async def dial_pressed(self):
         if self.confirmation_page:
             # buy
             selected_name = self.names[self.selected_idex]
@@ -130,52 +130,54 @@ class CoffeeTerminal:
                 db.write(selected_name + "\n")
             self.coffee_balance[selected_name] = new_balance
             # print balance
-            self.lcd.lcd_display_string("New Balance:", 1)
-            self.lcd.lcd_display_string(str(new_balance)[:20], 1)
-            asyncio.sleep(3)
+            await self.lcd.lcd_display_string("New Balance:", 1)
+            await self.lcd.lcd_display_string(str(new_balance)[:20], 1)
+            await asyncio.sleep(3)
             # print thank you message
-            self.lcd.lcd_display_string("Thank you for", 1)
-            self.lcd.lcd_display_string("choosing the", 2)
-            self.lcd.lcd_display_string("Coffee-Terminal", 3)
-            asyncio.sleep(2)
+            await self.lcd.lcd_display_string("Thank you for", 1)
+            await self.lcd.lcd_display_string("choosing the", 2)
+            await self.lcd.lcd_display_string("Coffee-Terminal", 3)
+            await asyncio.sleep(2)
             self.confirmation_page = False
-            self.display_index()
+            await self.display_index()
         else:
             self.confirmation_page = True
-            self.display_confirmation()
+            await self.display_confirmation()
+
+    async def dial_turned(self, i):
+        if not self.confirmation_page:
+            self.selected_idex = (self.selected_idex + i) % len(self.names)
+            await self.display_index()
+        else:
+            self.confirmation_index = (self.confirmation_index + i) % 2
+            await self.display_confirmation()
+
+    def switch_pressed(self):
+        asyncio.run(self.dial_pressed())
 
     def up_callback(self):
-        if not self.confirmation_page:
-            self.selected_idex = (self.selected_idex + 1) % len(self.names)
-            self.display_index()
-        else:
-            self.confirmation_index = (self.confirmation_index + 1) % 2
+        asyncio.run(self.dial_turned(+1))
 
     def down_callback(self):
-        if not self.confirmation_page:
-            self.selected_idex = (self.selected_idex - 1) % len(self.names)
-            self.display_index()
-        else:
-            self.confirmation_index = (self.confirmation_index - 1) % 2
-            self.display_confirmation()
+        asyncio.run(self.dial_turned(-1))
 
     def generate_name_str(self, prefix, name):
         balance = str(self.coffee_balance[name])
         return (prefix + name + (" " * 20))[:(20 - len(balance))] + balance
 
-    def display_index(self):
+    async def display_index(self):
         names = [self.names[(self.selected_idex + i) % len(self.names)] for i in range(-1, 2)]
-        self.lcd.lcd_display_string(self.generate_name_str("  ", names[0]), 1)
-        self.lcd.lcd_display_string(self.generate_name_str("> ", names[1]), 2)
-        self.lcd.lcd_display_string(self.generate_name_str("  ", names[2]), 3)
+        await self.lcd.lcd_display_string(self.generate_name_str("  ", names[0]), 1)
+        await self.lcd.lcd_display_string(self.generate_name_str("> ", names[1]), 2)
+        await self.lcd.lcd_display_string(self.generate_name_str("  ", names[2]), 3)
 
-    def display_confirmation(self):
+    async def display_confirmation(self):
         selectors = ["  ", "> "]
         if self.confirmation_index:
             selectors.reverse()
-        self.lcd.lcd_display_string(self.generate_name_str("* ", self.names[self.selected_idex]), 1)
-        self.lcd.lcd_display_string(selectors.pop() + "Confirm", 2)
-        self.lcd.lcd_display_string(selectors.pop() + "Cancel", 3)
+        await self.lcd.lcd_display_string(self.generate_name_str("* ", self.names[self.selected_idex]), 1)
+        await self.lcd.lcd_display_string(selectors.pop() + "Confirm", 2)
+        await self.lcd.lcd_display_string(selectors.pop() + "Cancel", 3)
 
 
 if __name__ == "__main__":
@@ -184,8 +186,6 @@ if __name__ == "__main__":
     try:
         if multiprocessing.cpu_count() < 2:  # if rasperry
             lcd = lcddriver.Lcd(debug=True)
-        lcd.lcd_clear()
-        lcd.lcd_backlight(True)
         terminal = CoffeeTerminal(lcd)
 
     except KeyboardInterrupt:
