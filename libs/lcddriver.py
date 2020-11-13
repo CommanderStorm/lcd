@@ -117,7 +117,7 @@ class Lcd:
         if line % 4 + 1 == 4:
             self.lcd_write(0xD4)
 
-        for char in string:
+        for char in string[:20]:
             self.lcd_write(ord(char), Rs)
 
     # clear lcd and set to home

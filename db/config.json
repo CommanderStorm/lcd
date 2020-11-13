@@ -1,5 +1,9 @@
 {
   "selected_idex": 0,
-  "names": [],
-  "coffee_on_last_restart": {}
+  "names": [
+    "default"
+  ],
+  "coffee_on_last_restart": {
+    "default": 0
+  }
 }
