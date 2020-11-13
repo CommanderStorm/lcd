@@ -89,7 +89,7 @@ class CoffeeTerminal:
             my_rotary.setup_rotary(up_callback=self.up_callback, down_callback=self.down_callback, debounce=300)
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
 
-        self.switchloop = asyncio.new_event_loop()
+        self.switchloop = asyncio.get_event_loop()
         print("setup done")
 
     async def print_rss(self):
