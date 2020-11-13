@@ -84,21 +84,15 @@ class CoffeeTerminal:
             }
             json.dump(config, config_file)
 
-        print("starting main loop")
-        asyncio.run(self.main())
-
-    async def main(self):
-        await self.lcd.lcd_clear()
-        await self.lcd.lcd_backlight(True)
-
         if multiprocessing.cpu_count() < 2:  # if rasperry
             my_rotary = Rotary(clk_gpio=5, dt_gpio=6, sw_gpio=12)
             my_rotary.setup_rotary(up_callback=self.up_callback, down_callback=self.down_callback, debounce=300)
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
-        print("rss loop")
-        await self.print_rss()
+
+        print("setup done")
 
     async def print_rss(self):
+        print("rss loop")
         count = 0
         while True:
             if count > 20:
@@ -111,7 +105,7 @@ class CoffeeTerminal:
                 for i in range(len(self.rss_text) - 20 + 1):
                     text_to_print = self.rss_text[i:i + 20]
                     await self.lcd.lcd_display_string(text_to_print, 0)
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.3)
                 await asyncio.sleep(3)
             else:
                 await self.lcd.lcd_display_string(self.rss_text, 0)
@@ -154,13 +148,13 @@ class CoffeeTerminal:
             await self.display_confirmation()
 
     def switch_pressed(self):
-        asyncio.run(self.dial_pressed())
+        asyncio.create_task(self.dial_pressed())
 
     def up_callback(self):
-        asyncio.run(self.dial_turned(+1))
+        asyncio.create_task(self.dial_turned(+1))
 
     def down_callback(self):
-        asyncio.run(self.dial_turned(-1))
+        asyncio.create_task(self.dial_turned(-1))
 
     def generate_name_str(self, prefix, name):
         balance = str(self.coffee_balance[name])
@@ -181,19 +175,24 @@ class CoffeeTerminal:
         await self.lcd.lcd_display_string(selectors.pop() + "Cancel", 3)
 
 
-if __name__ == "__main__":
-
+async def main():
     lcd = lcddriver.LcdDummy()
     try:
         if multiprocessing.cpu_count() < 2:  # if rasperry
             lcd = lcddriver.Lcd(debug=True)
+        await lcd.lcd_clear()
+        await lcd.lcd_backlight(True)
         terminal = CoffeeTerminal(lcd)
-
+        asyncio.create_task(terminal.print_rss())
     except KeyboardInterrupt:
         pass
     finally:
-        asyncio.run(lcd.lcd_clear())
-        asyncio.run(lcd.lcd_display_string("Sorry for the", 0))
-        asyncio.run(lcd.lcd_display_string("inconvenience.", 1))
-        asyncio.run(lcd.lcd_display_string("Maintenance in", 2))
-        asyncio.run(lcd.lcd_display_string("progress...", 3))
+        await lcd.lcd_clear()
+        await lcd.lcd_display_string("Sorry for the", 0)
+        await lcd.lcd_display_string("inconvenience.", 1)
+        await lcd.lcd_display_string("Maintenance in", 2)
+        await lcd.lcd_display_string("progress...", 3)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
