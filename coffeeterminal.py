@@ -89,6 +89,7 @@ class CoffeeTerminal:
             my_rotary.setup_rotary(up_callback=self.up_callback, down_callback=self.down_callback, debounce=300)
             my_rotary.setup_switch(sw_long_callback=self.switch_pressed, long_press=True, debounce=300)
 
+        self.switchloop = asyncio.new_event_loop()
         print("setup done")
 
     async def print_rss(self):
@@ -148,13 +149,13 @@ class CoffeeTerminal:
             await self.display_confirmation()
 
     def switch_pressed(self):
-        asyncio.create_task(self.dial_pressed())
+        asyncio.run_coroutine_threadsafe(self.dial_pressed(), self.switchloop)
 
     def up_callback(self):
-        asyncio.create_task(self.dial_turned(+1))
+        asyncio.run_coroutine_threadsafe(self.dial_turned(+1), self.switchloop)
 
     def down_callback(self):
-        asyncio.create_task(self.dial_turned(-1))
+        asyncio.run_coroutine_threadsafe(self.dial_turned(-1), self.switchloop)
 
     def generate_name_str(self, prefix, name):
         balance = str(self.coffee_balance[name])
@@ -179,7 +180,9 @@ async def main(lcd_terminal):
     await lcd_terminal.lcd_clear()
     await lcd_terminal.lcd_backlight(True)
     terminal = CoffeeTerminal(lcd_terminal)
-    await asyncio.wait_for(terminal.print_rss(), None)
+    await asyncio.create_task(terminal.print_rss())
+    while True:
+        await asyncio.sleep(10)
 
 
 if __name__ == "__main__":
