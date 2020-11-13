@@ -66,6 +66,7 @@ class CoffeeTerminal:
         with open(DB_FILE_Path) as db_file:
             served_coffees = db_file.readlines()
             for line in served_coffees:
+                line = line.strip()
                 if line in self.coffee_balance.keys():
                     self.coffee_balance[line] += 1
                 else:
