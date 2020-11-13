@@ -192,7 +192,7 @@ if __name__ == "__main__":
         print("KeyboardInterrupt")
     finally:
         asyncio.run(lcd.lcd_clear())
-        asyncio.run(await lcd.lcd_display_string("Sorry for the", 0))
-        asyncio.run(await lcd.lcd_display_string("inconvenience.", 1))
-        asyncio.run(await lcd.lcd_display_string("Maintenance in", 2))
-        asyncio.run(await lcd.lcd_display_string("progress...", 3))
+        asyncio.run(lcd.lcd_display_string("Sorry for the", 0))
+        asyncio.run(lcd.lcd_display_string("inconvenience.", 1))
+        asyncio.run(lcd.lcd_display_string("Maintenance in", 2))
+        asyncio.run(lcd.lcd_display_string("progress...", 3))
