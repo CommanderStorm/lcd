@@ -138,6 +138,7 @@ class CoffeeTerminal:
             self.lcd.lcd_display_string("choosing the", 2)
             self.lcd.lcd_display_string("Coffee-Terminal", 3)
             asyncio.sleep(2)
+            self.confirmation_page = False
             self.display_index()
         else:
             self.confirmation_page = True
@@ -163,7 +164,7 @@ class CoffeeTerminal:
         return (prefix + name + (" " * 20))[:(20 - len(balance))] + balance
 
     def display_index(self):
-        names = [self.names[(self.selected_idex + i) % len(self.names)] for i in range(-1, 1)]
+        names = [self.names[(self.selected_idex + i) % len(self.names)] for i in range(-1, 2)]
         self.lcd.lcd_display_string(self.generate_name_str("  ", names[0]), 1)
         self.lcd.lcd_display_string(self.generate_name_str("> ", names[1]), 2)
         self.lcd.lcd_display_string(self.generate_name_str("  ", names[2]), 3)
