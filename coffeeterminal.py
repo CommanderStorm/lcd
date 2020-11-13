@@ -94,7 +94,6 @@ class CoffeeTerminal:
         print("setup done")
 
     async def print_rss(self):
-        print("rss loop")
         count = 0
         while True:
             count -= 1
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main(lcd))
     except KeyboardInterrupt:
-        print("KeyboardInterrupt")
+        pass
     finally:
         asyncio.run(lcd.lcd_clear())
         asyncio.run(lcd.lcd_display_string("Sorry for the", 0))

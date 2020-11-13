@@ -111,7 +111,7 @@ class Lcd:
     async def lcd_display_string(self, string, line):
         string = (string + (" " * 20))[:20]
         if self.debug:
-            print(f"{line}: {string} [len: {len(string)}]")
+            print(f"{line}: {string}")
         async with self.lock:
             if line % 4 + 1 == 1:
                 self.lcd_write(0x80)
