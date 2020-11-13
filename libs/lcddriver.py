@@ -142,6 +142,10 @@ class Lcd:
 
 class LcdDummy:
 
+    def __init__(self, debug=False):
+        self.lock = asyncio.Lock()
+        self.debug = debug
+
     def lcd_strobe(self, data):
         pass
 
@@ -151,13 +155,14 @@ class LcdDummy:
     def lcd_write(self, cmd, mode=0):
         pass
 
-    def lcd_display_string(self, string, line):
-        print(f"{line}: {string}")
-        pass
+    async def lcd_display_string(self, string, line):
+        async with self.lock:
+            print(f"{line}: {string}")
 
-    def lcd_clear(self):
-        print("cleared screen")
-        pass
+    async def lcd_clear(self):
+        async with self.lock:
+            print("cleared screen")
 
-    def lcd_backlight(self, state):
-        pass
+    async def lcd_backlight(self, state):
+        async with self.lock:
+            print(f"backlight={state}")
