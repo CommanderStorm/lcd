@@ -205,3 +205,4 @@ fabric.properties
 
 /libs/pigpio_encoder.py
 .idea/
+/db/*
