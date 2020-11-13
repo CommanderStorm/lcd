@@ -95,17 +95,17 @@ class CoffeeTerminal:
         print("rss loop")
         count = 0
         while True:
-            if count > 20:
+            count -= 1
+            if count <= 0:
                 await self.update_rss()
-                count = 0
-            await self.update_rss()
+                count = 40
             if len(self.rss_text) > 20:
                 await self.lcd.lcd_display_string(self.rss_text[:20], 0)
                 await asyncio.sleep(2)
                 for i in range(len(self.rss_text) - 20 + 1):
                     text_to_print = self.rss_text[i:i + 20]
                     await self.lcd.lcd_display_string(text_to_print, 0)
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.4)
                 await asyncio.sleep(3)
             else:
                 await self.lcd.lcd_display_string(self.rss_text, 0)
@@ -175,24 +175,24 @@ class CoffeeTerminal:
         await self.lcd.lcd_display_string(selectors.pop() + "Cancel", 3)
 
 
-async def main():
-    lcd = lcddriver.LcdDummy()
-    try:
-        if multiprocessing.cpu_count() < 2:  # if rasperry
-            lcd = lcddriver.Lcd(debug=True)
-        await lcd.lcd_clear()
-        await lcd.lcd_backlight(True)
-        terminal = CoffeeTerminal(lcd)
-        asyncio.create_task(terminal.print_rss())
-    except KeyboardInterrupt:
-        pass
-    finally:
-        await lcd.lcd_clear()
-        await lcd.lcd_display_string("Sorry for the", 0)
-        await lcd.lcd_display_string("inconvenience.", 1)
-        await lcd.lcd_display_string("Maintenance in", 2)
-        await lcd.lcd_display_string("progress...", 3)
+async def main(lcd_terminal):
+    await lcd_terminal.lcd_clear()
+    await lcd_terminal.lcd_backlight(True)
+    terminal = CoffeeTerminal(lcd_terminal)
+    await asyncio.wait_for(terminal.print_rss(), None)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    lcd = lcddriver.LcdDummy()
+    if multiprocessing.cpu_count() < 2:  # if rasperry
+        lcd = lcddriver.Lcd(debug=True)
+    try:
+        asyncio.run(main(lcd))
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt")
+    finally:
+        asyncio.run(lcd.lcd_clear())
+        asyncio.run(await lcd.lcd_display_string("Sorry for the", 0))
+        asyncio.run(await lcd.lcd_display_string("inconvenience.", 1))
+        asyncio.run(await lcd.lcd_display_string("Maintenance in", 2))
+        asyncio.run(await lcd.lcd_display_string("progress...", 3))
