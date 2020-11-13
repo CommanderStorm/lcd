@@ -46,7 +46,7 @@ class CoffeeTerminal:
         # setup rss
         self.rss_text = "Loading Tagesschau"
         # load config
-        with open(CONFIG_FILE_Path) as config_file:
+        with open(CONFIG_FILE_Path, "r+") as config_file:
             config = json.load(config_file)
         self.selected_idex: int = int(config["selected_index"])
         self.names: List[str] = list(set(config["names"]))
@@ -96,10 +96,6 @@ class CoffeeTerminal:
     async def print_rss(self):
         count = 0
         while True:
-            count -= 1
-            if count <= 0:
-                await self.update_rss()
-                count = 40
             if len(self.rss_text) > 20:
                 await self.lcd.lcd_display_string(self.rss_text[:20], 0)
                 await asyncio.sleep(2)
@@ -111,6 +107,10 @@ class CoffeeTerminal:
             else:
                 await self.lcd.lcd_display_string(self.rss_text, 0)
                 await asyncio.sleep(4)
+            count -= 1
+            if count <= 0:
+                await self.update_rss()
+                count = 40
 
     async def update_rss(self):
         d = feedparser.parse(RSS_URL)["entries"]
@@ -119,26 +119,32 @@ class CoffeeTerminal:
 
     async def dial_pressed(self):
         if self.confirmation_page:
-            # buy
-            selected_name = self.names[self.selected_idex]
-            new_balance = self.coffee_balance[selected_name] + 1
-            with open(DB_FILE_Path, "a+") as db:
-                db.write(selected_name + "\n")
-            self.coffee_balance[selected_name] = new_balance
-            # print balance
-            await self.lcd.lcd_display_string("New Balance:", 1)
-            await self.lcd.lcd_display_string(str(new_balance), 2)
-            await self.lcd.lcd_display_string("", 3)
-            await asyncio.sleep(3)
-            # print thank you message
-            await self.lcd.lcd_display_string("Thank you for", 1)
-            await self.lcd.lcd_display_string("choosing the", 2)
-            await self.lcd.lcd_display_string("Coffee-Terminal", 3)
-            await asyncio.sleep(2)
-            self.confirmation_page = False
-            await self.display_index()
+            if self.confirmation_index == 0:
+                # cancel
+                self.confirmation_page = False
+                await self.display_index()
+            else:
+                # buy
+                selected_name = self.names[self.selected_idex]
+                new_balance = self.coffee_balance[selected_name] + 1
+                with open(DB_FILE_Path, "a+") as db:
+                    db.write(selected_name + "\n")
+                self.coffee_balance[selected_name] = new_balance
+                # print balance
+                await self.lcd.lcd_display_string("New Balance:", 1)
+                await self.lcd.lcd_display_string(str(new_balance), 2)
+                await self.lcd.lcd_display_string("", 3)
+                await asyncio.sleep(3)
+                # print thank you message
+                await self.lcd.lcd_display_string("Thank you for", 1)
+                await self.lcd.lcd_display_string("choosing the", 2)
+                await self.lcd.lcd_display_string("Coffee-Terminal", 3)
+                await asyncio.sleep(2)
+                self.confirmation_page = False
+                await self.display_index()
         else:
             self.confirmation_page = True
+            self.confirmation_index = 0
             await self.display_confirmation()
 
     async def dial_turned(self, i):
@@ -169,12 +175,13 @@ class CoffeeTerminal:
         await self.lcd.lcd_display_string(self.generate_name_str("  ", names[2]), 3)
 
     async def display_confirmation(self):
-        selectors = ["  ", "> "]
-        if self.confirmation_index:
-            selectors.reverse()
         await self.lcd.lcd_display_string(self.generate_name_str("* ", self.names[self.selected_idex]), 1)
-        await self.lcd.lcd_display_string(selectors.pop() + "Confirm", 2)
-        await self.lcd.lcd_display_string(selectors.pop() + "Cancel", 3)
+        if self.confirmation_index == 0:
+            await self.lcd.lcd_display_string("-> Cancel", 2)
+            await self.lcd.lcd_display_string("   Confirm", 3)
+        else:
+            await self.lcd.lcd_display_string("  Cancel", 2)
+            await self.lcd.lcd_display_string("> Confirm", 3)
 
 
 async def main(lcd_terminal):
