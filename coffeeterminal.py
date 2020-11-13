@@ -149,13 +149,13 @@ class CoffeeTerminal:
             await self.display_confirmation()
 
     def switch_pressed(self):
-        self.switchloop.create_task(self.dial_pressed(), name="switch_pressed")
+        self.switchloop.create_task(self.dial_pressed())
 
     def up_callback(self):
-        self.switchloop.create_task(self.dial_turned(+1), name="up_callback")
+        self.switchloop.create_task(self.dial_turned(+1))
 
     def down_callback(self):
-        self.switchloop.create_task(self.dial_turned(-1), name="down_callback")
+        self.switchloop.create_task(self.dial_turned(-1))
 
     def generate_name_str(self, prefix, name):
         balance = str(self.coffee_balance[name])
